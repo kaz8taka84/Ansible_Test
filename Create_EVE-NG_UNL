@@ -4,7 +4,8 @@ Topology
    [Linux]---------[Cloud0] --------------[R1]
 
 
-[R1]
+
+[R1] Cisco IOL
 ---------------------------------------------
 hostname R1
 ip domain name flex-one.com
@@ -26,7 +27,7 @@ wr
 
 
 
-[Linux]
+[Linux] linux-ubuntu-srv-16.04.4-webmin
 /etc/network/interfaces
 ---------------------------------------------
 #iface ens3 inet dhcp
