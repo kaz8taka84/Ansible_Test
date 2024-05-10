@@ -30,7 +30,7 @@ wr
 ```
 
 ### Linux サーバーの設定 (/etc/network/interfaces)
-```#iface ens3 inet dhcp
+```##iface ens3 inet dhcp
 
 iface ens3 inet static
  address 192.168.1.10
