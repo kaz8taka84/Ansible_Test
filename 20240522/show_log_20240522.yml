@@ -1,0 +1,11 @@
+- hosts: Cat3750
+  gather_facts: no
+
+  tasks:
+    - name: send show log
+      ios_command:
+        commands: "show log"
+      register: ios_results
+    - name: display show log
+      debug:
+        var: ios_results
