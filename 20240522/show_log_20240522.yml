@@ -4,7 +4,7 @@
   tasks:
     - name: send show log
       ios_command:
-        commands: "show log"
+        commands: "show log | include DOWN"
       register: ios_results
     - name: display show log
       debug:
