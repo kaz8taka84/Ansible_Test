@@ -1,0 +1,16 @@
+- hosts: Cat3750
+  gather_facts: no
+
+  tasks:
+    - name: send show log
+      ios_command:
+        commands: "show log | include DOWN"
+      register: ios_results
+    - name: display show log
+      debug:
+        var: ios_results
+    - name: Save log output to file
+      ansible.builtin.copy:
+        content: "{{ ios_results.stdout }}"
+        dest: "/home/nttcom/Ansible_Test/logs/{{ inventory_hostname }}_2024060501_log.txt"
+
