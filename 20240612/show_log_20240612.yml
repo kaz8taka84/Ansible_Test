@@ -1,0 +1,76 @@
+- hosts: Cat3750
+  gather_facts: no
+
+  vars:
+    repo_owner: "kaz8taka84"
+    repo_name: "Ansible_Test"
+    branch: "main"
+    file_path: "/home/nttcom/takahashi_test/Ansible_Test/logs/Cat3750_2024061201_log.txt"
+    commit_message: "Add {{ file_name }}"
+    timeout_seconds: 60
+  vars_files:
+    - /home/nttcom/takahashi_test/secrets.yml
+
+
+  tasks:
+    - name: send show log
+      ios_command:
+        commands: "show log | include DOWN"
+      register: ios_results
+    - name: display show log
+      debug:
+        var: ios_results
+    - name: Save log output to file
+      ansible.builtin.copy:
+        content: "{{ ios_results.stdout }}"
+        dest: "/home/nttcom/takahashi_test/Ansible_Test/logs/{{ inventory_hostname }}_2024061201_log.txt"
+
+    - name: Get the file name
+      set_fact:
+        file_name: "{{ file_path | basename }}"
+
+    - name: Read the file content
+      slurp:
+        src: "{{ file_path }}"
+      register: slurped_file
+
+    - name: Base64 encode the file content # ★修正した
+      set_fact:
+        file_content: "{{ slurped_file.content | b64encode }}"
+
+    - name: Check if the file exists on GitHub # ★修正した
+      uri:
+        url: "https://api.github.com/repos/{{ repo_owner }}/{{ repo_name }}/contents/logs/{{ file_name }}"
+        method: GET
+        headers:
+          Authorization: "token {{ github_token }}"
+        status_code: [200, 404]
+      register: file_check
+
+    - name: Set SHA if the file exists
+      set_fact:
+        file_sha: "{{ file_check.json.sha if file_check.status == 200 else None }}"
+
+    - name: Create JSON data # ★修正した
+      set_fact:
+        json_data: >-
+          {
+            "message": "{{ commit_message }}",
+            "content": "{{ file_content }}",
+            "branch": "{{ branch }}",
+            {% if file_sha is defined and file_sha is not none %}
+            "sha": "{{ file_sha }}"
+            {% endif %}
+          }
+
+    - name: Upload file to GitHub
+      uri:
+        url: "https://api.github.com/repos/{{ repo_owner }}/{{ repo_name }}/contents/logs/{{ file_name }}"
+        method: PUT
+        headers:
+          Authorization: "token {{ github_token }}"
+          Content-Type: "application/json"
+        body_format: json # ★追加した
+        body: "{{ json_data }}"
+        status_code: [201, 200]
+        timeout: "{{ timeout_seconds }}"
